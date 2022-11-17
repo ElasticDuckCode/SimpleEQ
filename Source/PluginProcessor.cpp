@@ -166,7 +166,8 @@ bool SimpleEQAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* SimpleEQAudioProcessor::createEditor()
 {
-    return new SimpleEQAudioProcessorEditor (*this);
+    //return new SimpleEQAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -182,6 +183,34 @@ void SimpleEQAudioProcessor::setStateInformation (const void* data, int sizeInBy
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }
+
+//== Jake ======================================================================
+juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::createParameterLayout() {
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Low-Cut Freq", 1}, "Low-Cut Freq", juce::NormalisableRange<float>(20.0, 20000.0, 1.0, 1.0), 20.0));
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"High-Cut Freq", 1}, "High-Cut Freq", juce::NormalisableRange<float>(20.0, 20000.0, 1.0, 1.0), 20000.0));
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Peak Freq", 1}, "Peak Freq", juce::NormalisableRange<float>(20.0, 20000.0, 1.0, 1.0), 750.0));
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Peak Gain", 1}, "Peak Gain", juce::NormalisableRange<float>(-24.0, 24.0, 0.5, 1.0), 0.0));
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Peak Quality", 1}, "Peak Quality", juce::NormalisableRange<float>(0.1, 10.0, 0.05, 1.0), 1.0));
+    
+    juce::StringArray choiceArray;
+    for(int i = 0; i < 4; i++) {
+        juce::String str;
+        str << (12 + i*12);
+        str << " db/Oct";
+        choiceArray.add(str);
+    }
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"Low Cut Slope", 1}, "Low Cut Slope", choiceArray, 0.0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"High Cut Slope", 1}, "High Cut Slope", choiceArray, 0.0));
+    
+    return layout;
+}
+
 
 //==============================================================================
 // This creates new instances of the plugin..
