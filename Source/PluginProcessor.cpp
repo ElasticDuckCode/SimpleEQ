@@ -95,6 +95,17 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    
+    // Create ProcessSpec
+    juce::dsp::ProcessSpec spec;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = 1;
+    spec.sampleRate = sampleRate;
+    
+    // Private MonoChain must be prepared using our spec
+    leftChain.prepare(spec);
+    rightChain.prepare(spec);
+    
 }
 
 void SimpleEQAudioProcessor::releaseResources()
@@ -150,12 +161,21 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
-    }
+//    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+//    {
+//        auto* channelData = buffer.getWritePointer (channel);
+//
+//        // ..do something to the data...
+//    }
+    
+    // Process AudioBlock for Left and Right Channel
+    juce::dsp::AudioBlock<float> block(buffer);
+    auto leftBlock = block.getSingleChannelBlock(0);
+    auto rightBlock = block.getSingleChannelBlock(1);
+    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+    leftChain.process(leftContext);
+    rightChain.process(rightContext);
 }
 
 //==============================================================================
@@ -188,16 +208,12 @@ void SimpleEQAudioProcessor::setStateInformation (const void* data, int sizeInBy
 juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::createParameterLayout() {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
+    // Create parameters for each component of our audio plugin.
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Low-Cut Freq", 1}, "Low-Cut Freq", juce::NormalisableRange<float>(20.0, 20000.0, 1.0, 1.0), 20.0));
-    
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"High-Cut Freq", 1}, "High-Cut Freq", juce::NormalisableRange<float>(20.0, 20000.0, 1.0, 1.0), 20000.0));
-    
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Peak Freq", 1}, "Peak Freq", juce::NormalisableRange<float>(20.0, 20000.0, 1.0, 1.0), 750.0));
-    
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Peak Gain", 1}, "Peak Gain", juce::NormalisableRange<float>(-24.0, 24.0, 0.5, 1.0), 0.0));
-    
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"Peak Quality", 1}, "Peak Quality", juce::NormalisableRange<float>(0.1, 10.0, 0.05, 1.0), 1.0));
-    
     juce::StringArray choiceArray;
     for(int i = 0; i < 4; i++) {
         juce::String str;

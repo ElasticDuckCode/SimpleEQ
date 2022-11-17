@@ -63,6 +63,17 @@ public:
     juce::AudioProcessorValueTreeState aptvs{*this, nullptr, "Parameters", createParameterLayout()};
     
 private:
+    //== Setting Aliases ===========================================================
+    
+    using Filter = juce::dsp::IIR::Filter<float>;
+    
+    //NOTE: Processor chains allows running of 4 filters in a single chain call
+    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+    MonoChain leftChain;
+    MonoChain rightChain;
+    
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
 };
