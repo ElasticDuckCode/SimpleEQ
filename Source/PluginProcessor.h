@@ -19,6 +19,19 @@ enum Slope {
     Slope_48
 };
 
+// Jake: Names of filters and chains used in project.
+using Filter = juce::dsp::IIR::Filter<float>;
+using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+
+// Jake: Enum representing positions of filters in chain.
+enum ChainPositions {
+    LowCut,
+    Peak,
+    HighCut
+};
+
+
 // Jake: Struct for extracting settings from our parameters
 struct ChainSettings {
     float peakFreq = 0;
@@ -29,7 +42,9 @@ struct ChainSettings {
     Slope lowCutSlope = Slope::Slope_12;
     Slope highCutSlope = Slope::Slope_12;
 };
+
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
+
 
 
 //==============================================================================
@@ -85,19 +100,11 @@ public:
 private:
     //== Setting Aliases ===========================================================
     
-    using Filter = juce::dsp::IIR::Filter<float>;
     
     //NOTE: Processor chains allows running of 4 filters in a single chain call
-    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
     MonoChain leftChain;
     MonoChain rightChain;
     
-    enum ChainPositions {
-        LowCut,
-        Peak,
-        HighCut
-    };
     
     using Coefficients = Filter::CoefficientsPtr;
     static void updateCoefficents(Coefficients& old, const Coefficients& replacement);
