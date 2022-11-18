@@ -25,8 +25,6 @@ using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
 using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
 using Coefficients = Filter::CoefficientsPtr;
 
-void updateCoefficents(Coefficients& old, const Coefficients& replacement);
-
 
 // Jake: Enum representing positions of filters in chain.
 enum ChainPositions {
@@ -50,6 +48,32 @@ struct ChainSettings {
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
 Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate);
+auto makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate);
+auto makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate);
+void updateCoefficents(Coefficients& old, const Coefficients& replacement);
+template<typename ChainType, typename CoefficientType>
+void updateCutFilter(ChainType& cutChain, const CoefficientType cutCoefficients, const Slope& cutSlope) {
+    cutChain.template setBypassed<0>(true);
+    cutChain.template setBypassed<1>(true);
+    cutChain.template setBypassed<2>(true);
+    cutChain.template setBypassed<3>(true);
+    switch (cutSlope) {
+        case Slope_48:
+            updateCoefficents(cutChain.template get<3>().coefficients, cutCoefficients[3]);
+            cutChain.template setBypassed<3>(false);
+        case Slope_36:
+            updateCoefficents(cutChain.template get<2>().coefficients, cutCoefficients[2]);
+            cutChain.template setBypassed<2>(false);
+        case Slope_24:
+            updateCoefficents(cutChain.template get<1>().coefficients, cutCoefficients[1]);
+            cutChain.template setBypassed<1>(false);
+        case Slope_12:
+            updateCoefficents(cutChain.template get<0>().coefficients, cutCoefficients[0]);
+            cutChain.template setBypassed<0>(false);
+            break;
+    }
+}
+    
 
 
 //==============================================================================
@@ -105,36 +129,9 @@ public:
 private:
     //== Setting Aliases ===========================================================
     
-    
     //NOTE: Processor chains allows running of 4 filters in a single chain call
     MonoChain leftChain;
     MonoChain rightChain;
-    
-    
-    
-    
-    template<typename ChainType, typename CoefficientType>
-    void updateCutFilter(ChainType& cutChain, const CoefficientType cutCoefficients, const Slope& cutSlope) {
-        cutChain.template setBypassed<0>(true);
-        cutChain.template setBypassed<1>(true);
-        cutChain.template setBypassed<2>(true);
-        cutChain.template setBypassed<3>(true);
-        switch (cutSlope) {
-            case Slope_48:
-                updateCoefficents(cutChain.template get<3>().coefficients, cutCoefficients[3]);
-                cutChain.template setBypassed<3>(false);
-            case Slope_36:
-                updateCoefficents(cutChain.template get<2>().coefficients, cutCoefficients[2]);
-                cutChain.template setBypassed<2>(false);
-            case Slope_24:
-                updateCoefficents(cutChain.template get<1>().coefficients, cutCoefficients[1]);
-                cutChain.template setBypassed<1>(false);
-            case Slope_12:
-                updateCoefficents(cutChain.template get<0>().coefficients, cutCoefficients[0]);
-                cutChain.template setBypassed<0>(false);
-                break;
-        }
-    }
     
     void updatePeakFilter(const ChainSettings& chainSettings);
     void updateLowCutFilter(const ChainSettings& chainSettings);
