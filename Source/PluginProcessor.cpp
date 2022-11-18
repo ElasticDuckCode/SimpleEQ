@@ -232,14 +232,15 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     settings.highCutFreq = apvts.getRawParameterValue("High-Cut Freq")->load();
     settings.peakFreq = apvts.getRawParameterValue("Peak Freq")->load();
     settings.peakGainInDecibels = apvts.getRawParameterValue("Peak Gain")->load();
-    settings.peakQuality = static_cast<Slope>(apvts.getRawParameterValue("Peak Quality")->load());
+    settings.peakQuality = apvts.getRawParameterValue("Peak Quality")->load();
     settings.lowCutSlope = static_cast<Slope>(apvts.getRawParameterValue("Low-Cut Slope")->load());
     settings.highCutSlope = static_cast<Slope>(apvts.getRawParameterValue("High-Cut Slope")->load());
     
     return settings;
 }
 
-void SimpleEQAudioProcessor::updateCoefficents(Coefficients& old, const Coefficients& replacement) {
+
+void updateCoefficents(Coefficients& old, const Coefficients& replacement) {
     *old = *replacement;
     return;
 }
@@ -270,8 +271,13 @@ void SimpleEQAudioProcessor::updateHighCutFilter(const ChainSettings &chainSetti
     return;
 }
 
+Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate) {
+    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+    return peakCoefficients;
+}
+
 void SimpleEQAudioProcessor::updatePeakFilter(const ChainSettings &chainSettings) {
-    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+    auto peakCoefficients = makePeakFilter(chainSettings, getSampleRate());
     updateCoefficents(leftChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     updateCoefficents(rightChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     return;

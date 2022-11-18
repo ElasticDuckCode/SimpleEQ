@@ -23,6 +23,10 @@ enum Slope {
 using Filter = juce::dsp::IIR::Filter<float>;
 using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
 using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+using Coefficients = Filter::CoefficientsPtr;
+
+void updateCoefficents(Coefficients& old, const Coefficients& replacement);
+
 
 // Jake: Enum representing positions of filters in chain.
 enum ChainPositions {
@@ -45,6 +49,7 @@ struct ChainSettings {
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
+Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate);
 
 
 //==============================================================================
@@ -106,8 +111,6 @@ private:
     MonoChain rightChain;
     
     
-    using Coefficients = Filter::CoefficientsPtr;
-    static void updateCoefficents(Coefficients& old, const Coefficients& replacement);
     
     
     template<typename ChainType, typename CoefficientType>
