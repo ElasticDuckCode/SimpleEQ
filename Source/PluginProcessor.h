@@ -10,6 +10,19 @@
 
 #include <JuceHeader.h>
 
+// Jake: Struct for extracting settings from our parameters
+struct ChainSettings {
+    float peakFreq = 0;
+    float peakGainInDecibels = 0;
+    float peakQuality = 0;
+    float lowCutFreq = 0;
+    float highCutFreq = 0;
+    int lowCutSlope = 0;
+    int highCutSlope = 0;
+};
+ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
+
+
 //==============================================================================
 /**
 */
@@ -56,9 +69,7 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
    
-    //== Jake ======================================================================
-    
-    // Needed to syncrhonize parameters among differ components of audio plugin
+    // Jake: Needed to syncrhonize parameters among differ components of audio plugin
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState aptvs{*this, nullptr, "Parameters", createParameterLayout()};
     
@@ -72,6 +83,12 @@ private:
     using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
     MonoChain leftChain;
     MonoChain rightChain;
+    
+    enum ChainPositions {
+        LowCut,
+        Peak,
+        HighCut
+    };
     
     
     //==============================================================================
