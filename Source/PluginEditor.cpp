@@ -39,9 +39,79 @@ void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
+    
+    
+    // Draw Magnitude Response
+    g.fillAll(juce::Colours::black);
+    auto bounds = getLocalBounds();
+    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 1/3);
+    auto& lowCut = monoChain.get<ChainPositions::LowCut>();
+    auto& highCut = monoChain.get<ChainPositions::HighCut>();
+    auto& peak = monoChain.get<ChainPositions::Peak>();
+    auto sampleRate = audioProcessor.getSampleRate();
+    
+    std::vector<double> mags;
+    mags.resize(responseArea.getWidth());
+    
+    auto W = responseArea.getWidth();
+    for (int i = 0; i < W; i++) {
+        double mag = 1.0f;
+        auto freq = juce::mapToLog10(double(i) / W, 20.0, 20000.0);
+        
+        // Get magnitude by multiplying value for all filters
+        if (!monoChain.isBypassed<ChainPositions::Peak>()) {
+            mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        
+        if (!lowCut.isBypassed<0>()) {
+            mag *= lowCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        if (!lowCut.isBypassed<1>()) {
+            mag *= lowCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        if (!lowCut.isBypassed<2>()) {
+            mag *= lowCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        if (!lowCut.isBypassed<3>()) {
+            mag *= lowCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        
+        if (!highCut.isBypassed<0>()) {
+            mag *= highCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        if (!highCut.isBypassed<1>()) {
+            mag *= highCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        if (!highCut.isBypassed<2>()) {
+            mag *= highCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        if (!highCut.isBypassed<3>()) {
+            mag *= highCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        
+        mags[i] = juce::Decibels::gainToDecibels(mag);
+    }
+    
+    juce::Path responseCurve;
+    
+    const double outputMin = responseArea.getBottom();
+    const double outputMax = responseArea.getY();
+    auto map = [outputMin, outputMax](double input) {
+        return juce::jmap(input, -24.0, 24.0, outputMin, outputMax);
+    };
+    
+    responseCurve.startNewSubPath(responseArea.getX(), map(mags.front()));
+    
+    for (size_t i = 0; i < mags.size(); ++i) {
+        responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
+        
+    }
+    
+    g.setColour(juce::Colours::blue);
+    g.drawRoundedRectangle(responseArea.toFloat(), 4.0, 1.0);
+    g.setColour(juce::Colours::yellow);
+    g.strokePath(responseCurve, juce::PathStrokeType(2.0));
+    
 }
 
 void SimpleEQAudioProcessorEditor::resized()
