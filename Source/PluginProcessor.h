@@ -103,6 +103,46 @@ private:
     void updatePeakFilter(const ChainSettings& chainSettings);
     static void updateCoefficents(Coefficients& old, const Coefficients& replacement);
     
+    template<typename ChainType, typename CoefficientType>
+    void updateCutFilter(ChainType& cutChain, const CoefficientType lowCutCoefficients, const Slope& lowCutSlope) {
+        
+        cutChain.template setBypassed<0>(true);
+        cutChain.template setBypassed<1>(true);
+        cutChain.template setBypassed<2>(true);
+        cutChain.template setBypassed<3>(true);
+        switch (lowCutSlope) {
+            case Slope_12:
+                *cutChain.template get<0>().coefficients = *lowCutCoefficients[0];
+                cutChain.template setBypassed<0>(false);
+                break;
+            case Slope_24:
+                *cutChain.template get<0>().coefficients = *lowCutCoefficients[0];
+                cutChain.template setBypassed<0>(false);
+                *cutChain.template get<1>().coefficients = *lowCutCoefficients[1];
+                cutChain.template setBypassed<1>(false);
+                break;
+            case Slope_36:
+                *cutChain.template get<0>().coefficients = *lowCutCoefficients[0];
+                cutChain.template setBypassed<0>(false);
+                *cutChain.template get<1>().coefficients = *lowCutCoefficients[1];
+                cutChain.template setBypassed<1>(false);
+                *cutChain.template get<2>().coefficients = *lowCutCoefficients[2];
+                cutChain.template setBypassed<2>(false);
+                break;
+            case Slope_48:
+                *cutChain.template get<3>().coefficients = *lowCutCoefficients[3];
+                cutChain.template setBypassed<3>(false);
+                *cutChain.template get<0>().coefficients = *lowCutCoefficients[0];
+                cutChain.template setBypassed<0>(false);
+                *cutChain.template get<1>().coefficients = *lowCutCoefficients[1];
+                cutChain.template setBypassed<1>(false);
+                *cutChain.template get<2>().coefficients = *lowCutCoefficients[2];
+                cutChain.template setBypassed<2>(false);
+                break;
+    }
+    
+    }
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
 };
