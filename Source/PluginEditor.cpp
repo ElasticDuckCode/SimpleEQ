@@ -11,16 +11,7 @@
 
 
 void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider &) {
-    // create square bounds to draw circular knob.
-    juce::Rectangle<float> bounds;
-    if (width > height) {
-        int offset = (width - height) / 2;
-        bounds = juce::Rectangle<float>(x + offset, y, height, height);
-    }
-    else {
-        int offset = (height - width) / 2;
-        bounds = juce::Rectangle<float>(x, y + offset, width, width);
-    }
+    auto bounds = juce::Rectangle<float>(x,  y, width, height);
     
     // draw rotary knob
     g.setColour(juce::Colours::blue);
@@ -64,7 +55,13 @@ void RotarySliderWithLabels::paint(juce::Graphics &g) {
 }
 
 juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const {
-    return getLocalBounds();
+    auto bounds = getLocalBounds();
+    auto size = juce::jmin(bounds.getWidth(), bounds.getHeight());
+    size -= 2 * getTextHeight();
+    juce::Rectangle<int> rect;
+    rect.setSize(size, size);
+    rect.setCentre(bounds.getCentreX(), bounds.getCentreY());
+    return rect;
 }
 
 //==============================================================================
