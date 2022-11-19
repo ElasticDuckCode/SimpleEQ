@@ -128,6 +128,15 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     : AudioProcessorEditor (&p),
       audioProcessor (p),
       responseCurve(audioProcessor),
+
+      peakFreqSlider(*audioProcessor.aptvs.getParameter("Peak Freq"), "Hz"),
+      peakGainSlider(*audioProcessor.aptvs.getParameter("Peak Gain"), "dB"),
+      peakQualitySlider(*audioProcessor.aptvs.getParameter("Peak Quality"), ""),
+      lowCutFreqSlider(*audioProcessor.aptvs.getParameter("Low-Cut Freq"), "Hz"),
+      highCutFreqSlider(*audioProcessor.aptvs.getParameter("High-Cut Freq"), "Hz"),
+      lowCutSlopeSlider(*audioProcessor.aptvs.getParameter("Low-Cut Slope"), "dB/Oct"),
+      highCutSlopeSlider(*audioProcessor.aptvs.getParameter("High-Cut Slope"), "dB/Oct"),
+
       peakFreqSliderAttachment(audioProcessor.aptvs, "Peak Freq", peakFreqSlider),
       peakGainSliderAttachment(audioProcessor.aptvs, "Peak Gain", peakGainSlider),
       peakQualitySliderAttachment(audioProcessor.aptvs, "Peak Quality", peakQualitySlider),
