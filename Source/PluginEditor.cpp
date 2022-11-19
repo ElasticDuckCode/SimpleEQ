@@ -10,7 +10,7 @@
 #include "PluginEditor.h"
 
 
-void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider &) {
+void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider) {
     auto bounds = juce::Rectangle<float>(x,  y, width, height);
     
     // draw rotary knob
@@ -19,21 +19,37 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, i
     g.setColour(juce::Colours::yellow);
     g.drawEllipse(bounds, 1.0);
     
-    // draw rotary notch
-    auto center = bounds.getCentre();
-    juce::Path path;
-    juce::Rectangle<float> rect;
-    rect.setLeft(center.getX() - 2);
-    rect.setRight(center.getX() + 2);
-    rect.setTop(bounds.getY());
-    rect.setBottom(center.getY());
-    path.addRectangle(rect);
-    jassert(rotaryStartAngle < rotaryEndAngle);
-    auto sliderAngleInRadians = juce::jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
-    path.applyTransform(juce::AffineTransform().rotation(sliderAngleInRadians, center.getX(), center.getY()));
-    g.fillPath(path);
-    
+    if (auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider)) {
+        // draw rotary notch
+        auto center = bounds.getCentre();
+        juce::Path path;
+        juce::Rectangle<float> rect;
+        rect.setLeft(center.getX() - 2);
+        rect.setRight(center.getX() + 2);
+        rect.setTop(bounds.getY());
+        rect.setBottom(center.getY() - 1.5 * rswl->getTextHeight());
+        path.addRectangle(rect);
+        jassert(rotaryStartAngle < rotaryEndAngle);
+        auto sliderAngleInRadians = juce::jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+        path.applyTransform(juce::AffineTransform().rotation(sliderAngleInRadians, center.getX(), center.getY()));
+        g.fillPath(path);
+        
+        // draw rotary text
+        g.setFont(rswl->getTextHeight());
+        auto text = rswl->getDisplayString();
+        auto strWidth = g.getCurrentFont().getStringWidth(text);
+        rect.setSize(strWidth + 4, rswl->getTextHeight());
+        rect.setCentre(center);
+        //g.seColour(juce::Colours::black);
+        //g.fillRect(rect);
+        g.setColour(juce::Colours::yellow);
+        g.drawFittedText(text, rect.toNearestInt(), juce::Justification::centred, 1);
+    }
     return;
+}
+//==============================================================================
+juce::String RotarySliderWithLabels::getDisplayString() const {
+    return juce::String(getValue()) + " " + suffix;
 }
 
 void RotarySliderWithLabels::paint(juce::Graphics &g) {
