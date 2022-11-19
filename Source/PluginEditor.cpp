@@ -83,8 +83,8 @@ juce::String RotarySliderWithLabels::getDisplayString() const {
 }
 
 void RotarySliderWithLabels::paint(juce::Graphics &g) {
-    auto startAngle = juce::degreesToRadians(180.0 + 45.0);
-    auto endAngle = juce::degreesToRadians(180.0 - 45.0) + juce::MathConstants<float>::twoPi;
+    float startAngle = juce::degreesToRadians(180.0 + 45.0);
+    float endAngle = juce::degreesToRadians(180.0 - 45.0) + juce::MathConstants<float>::twoPi;
     auto range = getRange();
     auto sliderBounds = getSliderBounds();
     
@@ -97,6 +97,26 @@ void RotarySliderWithLabels::paint(juce::Graphics &g) {
                                       startAngle,
                                       endAngle,
                                       *this);
+    
+    // Draw dial labels
+    auto center = sliderBounds.toFloat().getCentre();
+    auto radius = sliderBounds.getWidth() / 2;
+    g.setColour(juce::Colours::yellow);
+    g.setFont(getTextHeight());
+    auto numChoices = labels.size();
+    for (int i = 0; i < numChoices; i++) {
+        float pos = labels[i].pos;
+        jassert(pos <= 0.0);
+        jassert(pos <= 1.0);
+        float angle = juce::jmap(pos, 0.0f, 1.0f, startAngle, endAngle);
+        auto labelCenter = center.getPointOnCircumference(radius + getTextHeight() * 0.6 , angle);
+        juce::Rectangle<float> rect;
+        auto label = labels[i].label;
+        rect.setSize(g.getCurrentFont().getStringWidth(label), getTextHeight());
+        rect.setCentre(labelCenter);
+        rect.setY(rect.getY() - getTextHeight());
+        g.drawFittedText(label, rect.toNearestInt(), juce::Justification::centred, 1);
+    }
     return;
 }
 
