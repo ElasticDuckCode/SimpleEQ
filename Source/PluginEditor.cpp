@@ -9,6 +9,65 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
+void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider &) {
+    // create square bounds to draw circular knob.
+    juce::Rectangle<float> bounds;
+    if (width > height) {
+        int offset = (width - height) / 2;
+        bounds = juce::Rectangle<float>(x + offset, y, height, height);
+    }
+    else {
+        int offset = (height - width) / 2;
+        bounds = juce::Rectangle<float>(x, y + offset, width, width);
+    }
+    
+    // draw rotary knob
+    g.setColour(juce::Colours::blue);
+    g.fillEllipse(bounds);
+    g.setColour(juce::Colours::yellow);
+    g.drawEllipse(bounds, 1.0);
+    
+    // draw rotary notch
+    auto center = bounds.getCentre();
+    juce::Path path;
+    juce::Rectangle<float> rect;
+    rect.setLeft(center.getX() - 2);
+    rect.setRight(center.getX() + 2);
+    rect.setTop(bounds.getY());
+    rect.setBottom(center.getY());
+    path.addRectangle(rect);
+    jassert(rotaryStartAngle < rotaryEndAngle);
+    auto sliderAngleInRadians = juce::jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+    path.applyTransform(juce::AffineTransform().rotation(sliderAngleInRadians, center.getX(), center.getY()));
+    g.fillPath(path);
+    
+    return;
+}
+
+void RotarySliderWithLabels::paint(juce::Graphics &g) {
+    auto startAngle = juce::degreesToRadians(180.0 + 45.0);
+    auto endAngle = juce::degreesToRadians(180.0 - 45.0) + juce::MathConstants<float>::twoPi;
+    auto range = getRange();
+    auto sliderBounds = getSliderBounds();
+    
+    getLookAndFeel().drawRotarySlider(g,
+                                      sliderBounds.getX(),
+                                      sliderBounds.getY(),
+                                      sliderBounds.getWidth(),
+                                      sliderBounds.getHeight(),
+                                      juce::jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0),
+                                      startAngle,
+                                      endAngle,
+                                      *this);
+    return;
+}
+
+juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const {
+    return getLocalBounds();
+}
+
+//==============================================================================
 ResponseCurve::ResponseCurve(SimpleEQAudioProcessor& p) : audioProcessor(p) {
     const auto& params = audioProcessor.getParameters();
     for (auto param : params) {
