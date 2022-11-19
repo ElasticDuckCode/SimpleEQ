@@ -106,15 +106,15 @@ void RotarySliderWithLabels::paint(juce::Graphics &g) {
     auto numChoices = labels.size();
     for (int i = 0; i < numChoices; i++) {
         float pos = labels[i].pos;
-        jassert(pos <= 0.0);
+        jassert(pos >= 0.0);
         jassert(pos <= 1.0);
         float angle = juce::jmap(pos, 0.0f, 1.0f, startAngle, endAngle);
-        auto labelCenter = center.getPointOnCircumference(radius + getTextHeight() * 0.6 , angle);
+        auto labelCenter = center.getPointOnCircumference(radius + getTextHeight(), angle);
         juce::Rectangle<float> rect;
         auto label = labels[i].label;
         rect.setSize(g.getCurrentFont().getStringWidth(label), getTextHeight());
         rect.setCentre(labelCenter);
-        rect.setY(rect.getY() - getTextHeight());
+        //rect.setY(rect.getY() - getTextHeight());
         g.drawFittedText(label, rect.toNearestInt(), juce::Justification::centred, 1);
     }
     return;
@@ -174,9 +174,11 @@ void ResponseCurve::updateChain() {
 void ResponseCurve::paint (juce::Graphics& g)
 {
     // Draw Magnitude Response
-    g.fillAll(juce::Colours::black);
     
     auto responseArea = getLocalBounds();
+    g.setColour(juce::Colours::black);
+    g.fillRect(responseArea);
+    
     auto W = responseArea.getWidth();
     
     auto& lowCut = monoChain.get<ChainPositions::LowCut>();
@@ -239,10 +241,9 @@ void ResponseCurve::paint (juce::Graphics& g)
         responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
         
     }
-    g.setColour(juce::Colours::blue);
-    g.drawRoundedRectangle(responseArea.toFloat(), 4.0, 1.0);
     g.setColour(juce::Colours::yellow);
-    g.strokePath(responseCurve, juce::PathStrokeType(2.0));
+    g.drawRoundedRectangle(responseArea.toFloat(), 4.0, 1.0);
+    g.strokePath(responseCurve, juce::PathStrokeType(1.0));
 }
 
 //==============================================================================
@@ -267,8 +268,26 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
       lowCutSlopeSliderAttachment(audioProcessor.aptvs, "Low-Cut Slope", lowCutSlopeSlider),
       highCutSlopeSliderAttachment(audioProcessor.aptvs, "High-Cut Slope", highCutSlopeSlider)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+    peakFreqSlider.labels.add({0.0, "20"});
+    peakFreqSlider.labels.add({1.0, "20k"});
+    peakGainSlider.labels.add({0.0, "-24"});
+    peakGainSlider.labels.add({1.0, "24"});
+    peakQualitySlider.labels.add({0.0, "0.1"});
+    peakQualitySlider.labels.add({1.0, "10"});
+    lowCutFreqSlider.labels.add({0.0, "20"});
+    lowCutFreqSlider.labels.add({1.0, "20k"});
+    highCutFreqSlider.labels.add({0.0, "20"});
+    highCutFreqSlider.labels.add({1.0, "20k"});
+    lowCutSlopeSlider.labels.add({0.0, "12"});
+    lowCutSlopeSlider.labels.add({1.0, "48"});
+    highCutSlopeSlider.labels.add({0.0, "12"});
+    highCutSlopeSlider.labels.add({1.0, "48"});
+    
+    
+    
+    
+    
+    
     for (auto& comp : getComponents()) {
         addAndMakeVisible(comp);
     }
@@ -283,7 +302,7 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // Draw Magnitude Response
-    g.fillAll(juce::Colours::black);
+    g.fillAll(juce::Colours::darkblue);
 }
 
 void SimpleEQAudioProcessorEditor::resized()
@@ -292,6 +311,7 @@ void SimpleEQAudioProcessorEditor::resized()
     // subcomponents in your editor..
     auto bounds = getLocalBounds();
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * 1/2);
+    responseArea.reduce(10, 10); // pad response display;
     auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 1/3);
     auto highCutArea = bounds.removeFromRight(bounds.getWidth() * 1/2);
     auto peakFreqArea = bounds.removeFromTop(bounds.getHeight() * 1/3);
