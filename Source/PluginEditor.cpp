@@ -15,6 +15,9 @@ ResponseCurve::ResponseCurve(SimpleEQAudioProcessor& p) : audioProcessor(p) {
         param->addListener(this);
     }
     startTimerHz(60);
+    
+    // Perform first chain update.
+    updateChain();
 }
 
 ResponseCurve::~ResponseCurve() {
@@ -29,19 +32,21 @@ void ResponseCurve::parameterValueChanged(int parameterIndex, float newValue) {
 }
 
 void ResponseCurve::timerCallback() {
-    if (parametersChanged.compareAndSetBool(false, true) || firstDraw.compareAndSetBool(false, true)) {
-        //update monochain
-        auto chainSettings = getChainSettings(audioProcessor.aptvs);
-        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCoefficents(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
-        auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
-        auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
-        
-        //signal repaint
+    if (parametersChanged.compareAndSetBool(false, true)) {
+        updateChain();
         repaint();
     }
+}
+
+void ResponseCurve::updateChain() {
+    auto chainSettings = getChainSettings(audioProcessor.aptvs);
+    auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCoefficents(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+    auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
+    auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
+    return;
 }
 
 void ResponseCurve::paint (juce::Graphics& g)

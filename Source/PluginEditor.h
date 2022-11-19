@@ -31,10 +31,10 @@ struct ResponseCurve : juce::Component, juce::AudioProcessorParameter::Listener,
 private:
     SimpleEQAudioProcessor& audioProcessor;
     
-    juce::Atomic<bool> firstDraw {true};
     juce::Atomic<bool> parametersChanged {false};
     
     MonoChain monoChain;
+    void updateChain();
 };
 
 //==============================================================================

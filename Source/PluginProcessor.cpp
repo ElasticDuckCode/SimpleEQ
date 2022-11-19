@@ -212,7 +212,6 @@ void SimpleEQAudioProcessor::setStateInformation (const void* data, int sizeInBy
     // whose contents will have been created by the getStateInformation() call.
     auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
     if (tree.isValid()) {
-        DBG("Loading state...");
         aptvs.replaceState(tree);
         updateFilters();
     }
