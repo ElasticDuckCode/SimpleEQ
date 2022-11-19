@@ -106,9 +106,6 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     leftChain.prepare(spec);
     rightChain.prepare(spec);
     
-    // Get defined parameters
-    auto chainSettings = getChainSettings(aptvs);
-    
     // Create filters
     updateFilters();
 }
@@ -206,7 +203,6 @@ void SimpleEQAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // as intermediaries to make it easy to save and load complex data.
     juce::MemoryOutputStream mos(destData, true);
     aptvs.state.writeToStream(mos);
-    
     return;
 }
 
@@ -216,7 +212,9 @@ void SimpleEQAudioProcessor::setStateInformation (const void* data, int sizeInBy
     // whose contents will have been created by the getStateInformation() call.
     auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
     if (tree.isValid()) {
+        DBG("Loading state...");
         aptvs.replaceState(tree);
+        updateFilters();
     }
     return;
 }
@@ -255,7 +253,7 @@ void SimpleEQAudioProcessor::updateFilters() {
 }
 
 
-auto makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate) {
+CoefficientArray makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate) {
     auto lowCutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, sampleRate,  2 * (chainSettings.lowCutSlope) + 1);
     return lowCutCoefficients;
 }
@@ -271,7 +269,7 @@ void SimpleEQAudioProcessor::updateLowCutFilter(const ChainSettings &chainSettin
 }
 
 
-auto makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate) {
+CoefficientArray makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate) {
     auto highCutCoefficients = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, sampleRate, 2 * (chainSettings.highCutSlope + 1));
     return highCutCoefficients;
 }

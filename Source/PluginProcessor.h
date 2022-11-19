@@ -24,6 +24,7 @@ using Filter = juce::dsp::IIR::Filter<float>;
 using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
 using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
 using Coefficients = Filter::CoefficientsPtr;
+using CoefficientArray = juce::ReferenceCountedArray<juce::dsp::IIR::Coefficients<float>>;
 
 
 // Jake: Enum representing positions of filters in chain.
@@ -48,8 +49,8 @@ struct ChainSettings {
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
 Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate);
-auto makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate);
-auto makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate);
+CoefficientArray makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate);
+CoefficientArray makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate);
 void updateCoefficents(Coefficients& old, const Coefficients& replacement);
 template<typename ChainType, typename CoefficientType>
 void updateCutFilter(ChainType& cutChain, const CoefficientType cutCoefficients, const Slope& cutSlope) {

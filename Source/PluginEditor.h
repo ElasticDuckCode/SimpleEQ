@@ -30,8 +30,8 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     
-    void parameterValueChanged(int parameterIndex, float newValue) override;
-    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override { }
+    void parameterValueChanged (int parameterIndex, float newValue) override;
+    void parameterGestureChanged (int parameterIndex, bool gestureIsStarting) override {}
     void timerCallback() override;
 
 private:
@@ -39,7 +39,8 @@ private:
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;
     
-    juce::Atomic<bool> parametersChanged = false;
+    juce::Atomic<bool> firstDraw {true};
+    juce::Atomic<bool> parametersChanged {false};
     
     CustomRotarySlider peakFreqSlider;
     CustomRotarySlider peakGainSlider;

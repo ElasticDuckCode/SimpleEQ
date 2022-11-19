@@ -24,17 +24,14 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (600, 400);
-    
     for (auto& comp : getComponents()) {
         addAndMakeVisible(comp);
     }
-    
     const auto& params = audioProcessor.getParameters();
     for (auto param : params) {
         param->addListener(this);
     }
-    
-    startTimer(60);
+    startTimerHz(60);
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
@@ -48,14 +45,13 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 //==============================================================================
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-    
-    
     // Draw Magnitude Response
     g.fillAll(juce::Colours::black);
+    
     auto bounds = getLocalBounds();
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * 1/3);
+    auto W = responseArea.getWidth();
+    
     auto& lowCut = monoChain.get<ChainPositions::LowCut>();
     auto& highCut = monoChain.get<ChainPositions::HighCut>();
     auto& peak = monoChain.get<ChainPositions::Peak>();
@@ -64,7 +60,6 @@ void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
     std::vector<double> mags;
     mags.resize(responseArea.getWidth());
     
-    auto W = responseArea.getWidth();
     for (int i = 0; i < W; i++) {
         double mag = 1.0f;
         auto freq = juce::mapToLog10(double(i) / W, 20.0, 20000.0);
@@ -113,16 +108,14 @@ void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
     
     responseCurve.startNewSubPath(responseArea.getX(), map(mags.front()));
     
-    for (size_t i = 0; i < mags.size(); ++i) {
+    for (size_t i = 1; i < mags.size(); ++i) {
         responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
         
     }
-    
     g.setColour(juce::Colours::blue);
     g.drawRoundedRectangle(responseArea.toFloat(), 4.0, 1.0);
     g.setColour(juce::Colours::yellow);
     g.strokePath(responseCurve, juce::PathStrokeType(2.0));
-    
 }
 
 void SimpleEQAudioProcessorEditor::resized()
@@ -147,26 +140,28 @@ void SimpleEQAudioProcessorEditor::resized()
     peakFreqSlider.setBounds(peakFreqArea);
     peakGainSlider.setBounds(peakGainArea);
     peakQualitySlider.setBounds(bounds);
-    
     return;
 }
 
 void SimpleEQAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue) {
-    parametersChanged = true;
-    
+    parametersChanged.set(true);
 }
 
 void SimpleEQAudioProcessorEditor::timerCallback() {
-    if (parametersChanged.compareAndSetBool(false, true)) {
+    if (parametersChanged.compareAndSetBool(false, true) || firstDraw.compareAndSetBool(false, true)) {
         //update monochain
         auto chainSettings = getChainSettings(audioProcessor.aptvs);
         auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
         updateCoefficents(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+        auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
+        auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
         
         //signal repaint
+        repaint();
     }
 }
-
 
 std::vector<juce::Component*> SimpleEQAudioProcessorEditor::getComponents() {
     return {
