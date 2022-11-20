@@ -272,7 +272,7 @@ void ResponseCurve::resized() {
         g.drawVerticalLine(left + width * normX, top, bottom);
     }
     juce::Array<float> gains = {
-        -24, -12, 0, 12, 24
+        -24, -12, 0., 12, 24
     };
     for (auto gain : gains) {
         auto y = juce::jmap(gain, -24.f, 24.f, float(bottom), top);
@@ -303,28 +303,38 @@ void ResponseCurve::resized() {
         g.drawFittedText(str, rect, juce::Justification::centred, 1);
     }
     
-    // Gain labels need consistent text width to look right.
-    juce::Array<juce::String> ylabels;
-    juce::Array<float> yvalues;
-    float textWidth = 0;
     for (auto gain: gains) {
+        // draw reponse labels
         auto y = juce::jmap(gain, -24.f, 24.f, float(bottom), top);
         juce::String str;
-        str << gain;
-        if (g.getCurrentFont().getStringWidth(str) > textWidth) {
-            textWidth = g.getCurrentFont().getStringWidth(str);
+        if (gain > 0.0) {
+            str << "+";
         }
-        ylabels.add(str);
-        yvalues.add(y);
-    }
-    for (int i = 0; i < yvalues.size(); i++) {
-        auto y = yvalues[i];
-        auto str = ylabels[i];
+        str << gain;
+        auto textWidth = g.getCurrentFont().getStringWidth(str);
         juce::Rectangle<int> rect;
         rect.setSize(textWidth, getTextHeight());
-        rect.setCentre(0, y);
-        rect.setX(displayArea.getX() - 1.25 * textWidth);
-        g.drawFittedText(str, rect, juce::Justification::right, 1);
+        rect.setX(displayArea.getX() - textWidth - 2);
+        rect.setCentre(rect.getCentreX(), y);
+        g.drawFittedText(str, rect, juce::Justification::centred, 1);
+    }
+    
+    for (auto gain: gains) {
+        // draw spectrum labels
+        g.setColour(juce::Colour(150, 150, 0));
+        gain = gain - 24.f;
+        auto y = juce::jmap(gain, -48.f, 0.f, float(bottom), top);
+        juce::String str;
+        if (gain > 0.0) {
+            str << "+";
+        }
+        str << gain;
+        auto textWidth = g.getCurrentFont().getStringWidth(str);
+        juce::Rectangle<int> rect;
+        rect.setSize(textWidth, getTextHeight());
+        rect.setX(displayArea.getRight() + 2);
+        rect.setCentre(rect.getCentreX(), y);
+        g.drawFittedText(str, rect, juce::Justification::centred, 1);
     }
     
     // Draw display border
