@@ -247,10 +247,12 @@ void ResponseCurve::resized() {
     background = juce::Image(juce::Image::PixelFormat::RGB, getWidth(), getHeight(), true);
     juce::Graphics g(background);
     
-    // create black display
-    g.fillAll(juce::Colours::black);
+    // Create black display
+    auto displayArea = getRenderArea();
+    g.setColour(juce::Colours::black);
+    g.fillRoundedRectangle(displayArea.toFloat(), 1);
     
-    // draw grid lines
+    // Draw grid lines
     auto gridArea = getAnalysisArea();
     float left = gridArea.toFloat().getX();
     float right = gridArea.toFloat().getRight();
@@ -260,9 +262,9 @@ void ResponseCurve::resized() {
     
     g.setColour(juce::Colour(50, 50, 0));
     juce::Array<float> freqs = {
-        20, 30, 40, 50, 100,
-        200, 300, 400, 500, 1000,
-        2000, 3000, 4000, 5000, 10000,
+        20, /*30, 40,*/ 50, 100,
+        200, /*300, 400,*/ 500, 1000,
+        2000, /*3000, 4000,*/ 5000, 10000,
         20000
     };
     for (auto freq : freqs) {
@@ -277,10 +279,57 @@ void ResponseCurve::resized() {
         g.drawHorizontalLine(y, left, right);
     }
     
-    g.setColour(juce::Colours::red);
-    g.drawRect(getRenderArea());
-    g.setColour(juce::Colours::orange);
-    g.drawRect(getAnalysisArea());
+    // Draw axis labels
+    g.setColour(juce::Colours::yellow);
+    g.setFont(getTextHeight());
+    for (auto freq : freqs) {
+        auto normX = juce::mapFromLog10(freq, 20.f, 20.E3f);
+        bool kHz = false;
+        if (freq >= 100.0) {
+            freq /= 1000.0;
+            kHz = true;
+        }
+        juce::String str;
+        str << freq;
+        if (kHz) {
+            str << "k";
+        }
+        //str << "Hz";
+        auto textWidth = g.getCurrentFont().getStringWidth(str);
+        juce::Rectangle<int> rect;
+        rect.setSize(textWidth, getTextHeight());
+        rect.setCentre(left + width * normX, 0);
+        rect.setY(displayArea.getBottom() + 2);
+        g.drawFittedText(str, rect, juce::Justification::centred, 1);
+    }
+    
+    // Gain labels need consistent text width to look right.
+    juce::Array<juce::String> ylabels;
+    juce::Array<float> yvalues;
+    float textWidth = 0;
+    for (auto gain: gains) {
+        auto y = juce::jmap(gain, -24.f, 24.f, float(bottom), top);
+        juce::String str;
+        str << gain;
+        if (g.getCurrentFont().getStringWidth(str) > textWidth) {
+            textWidth = g.getCurrentFont().getStringWidth(str);
+        }
+        ylabels.add(str);
+        yvalues.add(y);
+    }
+    for (int i = 0; i < yvalues.size(); i++) {
+        auto y = yvalues[i];
+        auto str = ylabels[i];
+        juce::Rectangle<int> rect;
+        rect.setSize(textWidth, getTextHeight());
+        rect.setCentre(0, y);
+        rect.setX(displayArea.getX() - 1.25 * textWidth);
+        g.drawFittedText(str, rect, juce::Justification::right, 1);
+    }
+    
+    // Draw display border
+    g.setColour(juce::Colours::yellow);
+    g.drawRoundedRectangle(displayArea.toFloat(), 1, 2);
     
     return;
 }
@@ -293,8 +342,8 @@ juce::Rectangle<int> ResponseCurve::getRenderArea() {
 
 juce::Rectangle<int> ResponseCurve::getAnalysisArea() {
     auto bounds = getRenderArea();
-    bounds.removeFromTop(4);
-    bounds.removeFromBottom(4);
+    bounds.removeFromTop(8);
+    bounds.removeFromBottom(8);
     return bounds;
 }
 
@@ -320,7 +369,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
       lowCutSlopeSliderAttachment(audioProcessor.aptvs, "Low-Cut Slope", lowCutSlopeSlider),
       highCutSlopeSliderAttachment(audioProcessor.aptvs, "High-Cut Slope", highCutSlopeSlider)
 {
-    setSize (500, 600);
+    setSize (700, 600);
     
     peakFreqSlider.labels.add({0.0, "20"});
     peakFreqSlider.labels.add({1.0, "20k"});

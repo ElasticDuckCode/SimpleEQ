@@ -75,6 +75,7 @@ private:
     void updateChain();
     juce::Rectangle<int> getRenderArea();
     juce::Rectangle<int> getAnalysisArea();
+    int getTextHeight() const { return 12; }
     
 };
 
