@@ -268,6 +268,8 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
       lowCutSlopeSliderAttachment(audioProcessor.aptvs, "Low-Cut Slope", lowCutSlopeSlider),
       highCutSlopeSliderAttachment(audioProcessor.aptvs, "High-Cut Slope", highCutSlopeSlider)
 {
+    setSize (400, 400);
+    
     peakFreqSlider.labels.add({0.0, "20"});
     peakFreqSlider.labels.add({1.0, "20k"});
     peakGainSlider.labels.add({0.0, "-24"});
@@ -283,15 +285,9 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     highCutSlopeSlider.labels.add({0.0, "12"});
     highCutSlopeSlider.labels.add({1.0, "48"});
     
-    
-    
-    
-    
-    
     for (auto& comp : getComponents()) {
         addAndMakeVisible(comp);
     }
-    setSize (600, 500);
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
@@ -311,7 +307,6 @@ void SimpleEQAudioProcessorEditor::resized()
     // subcomponents in your editor..
     auto bounds = getLocalBounds();
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * 1/2);
-    responseArea.reduce(10, 10); // pad response display;
     auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 1/3);
     auto highCutArea = bounds.removeFromRight(bounds.getWidth() * 1/2);
     auto peakFreqArea = bounds.removeFromTop(bounds.getHeight() * 1/3);
