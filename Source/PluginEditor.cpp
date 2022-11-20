@@ -175,10 +175,9 @@ void ResponseCurve::paint (juce::Graphics& g)
 {
     // Draw Magnitude Response
     
-    auto responseArea = getLocalBounds();
-    g.setColour(juce::Colours::black);
-    g.fillRect(responseArea);
+    g.drawImage(background, getLocalBounds().toFloat());
     
+    auto responseArea = getLocalBounds();
     auto W = responseArea.getWidth();
     
     auto& lowCut = monoChain.get<ChainPositions::LowCut>();
@@ -246,6 +245,36 @@ void ResponseCurve::paint (juce::Graphics& g)
     g.strokePath(responseCurve, juce::PathStrokeType(1.0));
 }
 
+void ResponseCurve::resized() {
+    background = juce::Image(juce::Image::PixelFormat::RGB, getWidth(), getHeight(), true);
+    juce::Graphics g(background);
+    
+    // create black display
+    g.fillAll(juce::Colours::black);
+    
+    // deraw grid lines
+    g.setColour(juce::Colour(50, 50, 0));
+    juce::Array<float> freqs = {
+        20, 30, 40, 50, 100,
+        200, 300, 400, 500, 1000,
+        2000, 3000, 4000, 5000, 10000,
+        20000
+    };
+    for (auto freq : freqs) {
+        auto normX = juce::mapFromLog10(freq, 20.f, 20.E3f);
+        g.drawVerticalLine(getWidth() * normX, 0.f, getHeight());
+    }
+    juce::Array<float> gains = {
+        -24, -12, 0, 12, 24
+    };
+    for (auto gain : gains) {
+        auto y = juce::jmap(gain, -24.f, 24.f, float(getHeight()), 0.f);
+        g.drawHorizontalLine(y, 0.f, getWidth());
+    }
+    
+    return;
+}
+
 //==============================================================================
 SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor& p)
     : AudioProcessorEditor (&p),
@@ -268,7 +297,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
       lowCutSlopeSliderAttachment(audioProcessor.aptvs, "Low-Cut Slope", lowCutSlopeSlider),
       highCutSlopeSliderAttachment(audioProcessor.aptvs, "High-Cut Slope", highCutSlopeSlider)
 {
-    setSize (400, 400);
+    setSize (500, 600);
     
     peakFreqSlider.labels.add({0.0, "20"});
     peakFreqSlider.labels.add({1.0, "20k"});

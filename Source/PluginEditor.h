@@ -64,14 +64,17 @@ struct ResponseCurve : juce::Component, juce::AudioProcessorParameter::Listener,
     void timerCallback() override;
     
     void paint (juce::Graphics&) override;
+    void resized() override;
 
 private:
     SimpleEQAudioProcessor& audioProcessor;
     
     juce::Atomic<bool> parametersChanged {false};
+    juce::Image background;
     
     MonoChain monoChain;
     void updateChain();
+    
 };
 
 //==============================================================================
