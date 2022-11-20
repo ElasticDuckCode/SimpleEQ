@@ -68,12 +68,13 @@ struct ResponseCurve : juce::Component, juce::AudioProcessorParameter::Listener,
 
 private:
     SimpleEQAudioProcessor& audioProcessor;
-    
     juce::Atomic<bool> parametersChanged {false};
     juce::Image background;
     
     MonoChain monoChain;
     void updateChain();
+    juce::Rectangle<int> getRenderArea();
+    juce::Rectangle<int> getAnalysisArea();
     
 };
 
